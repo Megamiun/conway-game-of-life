@@ -52,12 +52,11 @@ class GameOfLife(points: Array<Point> = emptyArray()): PApplet() {
         redraw()
     }
 
-    private fun getNewPoints(): MutableSet<Point> {
-        val pointCount = mutableMapOf<Point, Int>()
-
-        setOfPoints.flatMap(Point::getAdjacent).forEach { point ->
-            pointCount.compute(point) { _, old -> old?.plus(1) ?: 1 }
-        }
+    private fun getNewPoints(): Set<Point> {
+        val pointCount = setOfPoints
+            .flatMap(Point::getAdjacent)
+            .groupingBy { it }
+            .eachCount()
 
         val newPoints = setOfPoints.toMutableSet()
 
@@ -84,18 +83,18 @@ class GameOfLife(points: Array<Point> = emptyArray()): PApplet() {
     private fun togglePause() = if (looping) noLoop() else loop()
 
     private fun Point.toggle() {
-        val newPoints = setOfPoints.toMutableList()
 
-        if (isAlive())
-            newPoints -= this
-        else
-            newPoints += this
+        val newPoints =
+            if (isAlive())
+                setOfPoints - this
+            else
+                setOfPoints + this
 
-        setOfPoints = newPoints.toSet()
+        setOfPoints = newPoints
         redraw()
     }
 
-    private fun Point.isAlive() = setOfPoints.contains(this)
+    private fun Point.isAlive() = this in setOfPoints
 
     private fun Point.render() {
         val xScaled = (x - originX) * scale
